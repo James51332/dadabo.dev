@@ -26,53 +26,142 @@ html, body
 #container {
     width: 50%;
     height: 100%;
-    min-width: 400px;
+    min-width: calc(0.85 * 600px);
     margin: auto;
 }
 
-.post img 
+@media screen and (max-width:600px) 
 {
-    width: 100%;
-    object-fit: cover;
-    max-height:300px;
+    #container
+    {
+        width: 85%;
+        height: 100%;
+        min-width: none;
+        margin: auto;
+    }
+}
+
+img 
+{
+    display:block;
+    width:100%;
+    object-fit: contain;
+    max-height: 400px;
+}
+
+h1,
+h2 
+{
+    margin-bottom: 2pt;
+}
+
+h6 
+{
+    margin-top: 2pt;
 }
 
 /* Text, Lines, and Links */
+a 
+{
+    color: var(--imperial-red);
+}
+
+a:hover 
+{
+    color: var(--rose-taupe);
+}
+
 hr {
     border: 0.25pt #35353535 solid;
 }
 
-a {
-    text-decoration: none;
-    color: var(--imperial-red);
-}
-
 h1, h2, h3
 {
+    display:inline-block;
+    text-decoration: none;
     font-family: 'Poppins', sans-serif;
     color: var(--vista-blue);
 }
 
-p, h6 
+p
+{
+    font-family: 'Geologica', sans-serif;
+    color: var(--jet);
+    line-height: 150%;
+    margin-bottom: 1.5em;
+}
+
+h6
 {
     font-family: 'Geologica', sans-serif;
     color: var(--jet);
 }
 
-h1, h2
-{
-    margin-bottom: 2pt;
+::selection {
+    background-color: var(--rose-taupe);
+    color: var(--silver);
 }
 
-h6
-{
-    margin-top:2pt;
+::-moz-selection {
+    background-color: var(--rose-taupe);
+    color: var(--silver);
 }
+
+/* Navbar */
+nav,
+nav *
+{
+    margin:0;
+    padding:0;
+}
+
+.bar
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-content: center;
+    padding:20pt 0pt 10pt 0pt;
+}
+
+.options
+{
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    gap: 15pt;
+}
+
+.options,
+nav h3,
+nav a
+{
+    font-family: 'Geologica', sans-serif;
+    color: var(--vista-blue);
+}
+
+nav a
+{
+    font-family: 'Geologica', sans-serif;
+    color: var(--vista-blue);
+    font-size: 1.1em;
+    text-decoration: none;
+    margin:0;
+    padding:0;
+}
+
+nav a:hover
+{
+    color: var(--vista-blue);
+    text-decoration: underline;
+}
+
 
 /* Footer */
 footer
 {
     margin-top:15pt;
+    padding-bottom:20pt;
 }
 
 #socials
