@@ -23,22 +23,12 @@ html, body
     background-color: var(--silver);
 }
 
-#container {
-    width: 50%;
-    height: 100%;
-    min-width: calc(0.85 * 600px);
-    margin: auto;
-}
-
-@media screen and (max-width:600px) 
+#container 
 {
-    #container
-    {
-        width: 85%;
-        height: 100%;
-        min-width: none;
-        margin: auto;
-    }
+    width: 85%;
+    height: 100%;
+    max-width: 700px;
+    margin: auto;
 }
 
 img 
@@ -72,7 +62,7 @@ a:hover
 }
 
 hr {
-    border: 0.25pt #35353535 solid;
+    border: 0.25pt #d1d1d1 solid;
 }
 
 h1, h2, h3
