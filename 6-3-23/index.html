@@ -15,7 +15,7 @@
                     <h3>dadabo.dev</h3>
                 </a>
                 <div class="options">
-                    <a href="#">About</a>
+                    <a href="../about/index.html">About</a>
                     <a href="../index.html">Home</a>
                 </div>
             </div>
@@ -105,11 +105,10 @@ bool isValidWord(const std::string& word)
     }
 }</code></pre>
 
-            <p>As you can see, we start with the center word, and attempt to elimatte the the half of the dictionary where
-                the target word is not. Next we move to the quarter, and the eighth, and so on and so forth. This repeats,
-                until our search range is small enough that we know the word isn't in the list, or until we find the word.
-                The gives us roughly log2(n) steps to check, which is only about 16 steps for a dictionary of 60,000 words. This 
-                is a totally shippable approach.
+            <p>We start with the center word, and attempt to eliminate one half of the dictionary from our search. Next we move to the quarter, and the eighth, and so on and 
+                so forth. This repeats, until our search range is small enough that we know the word isn't in the list, or 
+                until we find the word. The gives us roughly log2(n) steps to check, which is only about 16 steps for a 
+                dictionary of 60,000 words. This is a totally shippable approach.
             </p>
 
             <h3>Improving the user experience</h3>
