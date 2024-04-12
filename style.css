@@ -73,11 +73,15 @@ h1, h2, h3
     color: var(--vista-blue);
 }
 
-p
+p, li
 {
     font-family: 'Geologica', sans-serif;
     color: var(--jet);
     line-height: 150%;
+}
+
+p
+{
     margin-bottom: 1.5em;
 }
 
