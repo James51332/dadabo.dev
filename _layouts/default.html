@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Google tag (gtag.js) -->
+    {% if jekyll.environment == "production" %}
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-FMW5N117JG"></script>
+      <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag() { dataLayer.push(arguments); }
+          gtag('js', new Date());
+          gtag('config', 'G-FMW5N117JG');
+      </script>
+    {% endif%}
+
+    <meta charset="utf-8">
+    <title>{{ page.title }}</title>
+
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/prism.css">
+
+    <!-- MathJax Expression Parser-->
+    <script>
+      window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+
+        (function () {
+          var script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js';
+          script.async = true;
+          document.head.appendChild(script);
+        })();
+    </script>
+  </head>
+  <body>
+    <div id="container">
+      {% include nav.html %}
+      {{ content }}
+      {% include footer.html %}
+    </div>
+    <script src="/assets/js/prism.js"></script>
+  </body>
+</html>
