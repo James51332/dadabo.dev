@@ -3,6 +3,8 @@ layout: post
 title: Revisiting My Ocean Simulation
 ---
 
+![Simulated Ocean](/assets/img/better-waves//final.png)
+
 It's been a fair bit of time since my first attempt at simulating the ocean through a sum of sines approach. Now, I'm ready to tackle a more daunting, but much more appealing approach using the Fourier transform!
 
 <!--more-->
@@ -16,8 +18,6 @@ Right now, our understanding of the Fourier transform is that it is a formula to
 However, let's take a moment to consider how this is different from what we did before. Both approaches sum together a variety of waves, but the spectrum for the sum of sines was generated using fractal brownian motion. So why do we need the Fourier transform? The answer lies in the time complexity of the algorithm. 
 
 Consider that as the size of our ocean grows (to be convincing, it needs to), the shader must add up waves for every point displaced. If the ocean is $n$ x $n$ vertices, the number of calculations is proportional to $n^2$. Therefore, we consider the algorithm $O(n^2)$, pronounced order $n^2$. As we scale our ocean, the number of computations grows too quickly to be reasonable. Here's where the Fourier transform comes in: *Using symmetry revealed by waves in the complex plane, the Fourier transform's time complexity can be reduced!* What a mouthful!
-
-This will make an ocean simulation possible that adds millions of waves together. While this is great in principle, the process of creating a physically realistic ocean has taken me many months. In my prior post, I severely underestimated the complexity of the process. Therefore, I've decided to split this post one more time. In this post, we will finalize our simulation process, and in the next, we will implement a much more physically accurate lighting model.
 
 ## Unlocking the Fast Fourier Transform
 
@@ -98,9 +98,9 @@ This system will be great! Let's consider how we can prepare our spectrum so tha
 
 ![frequency demo](/assets/img/better-waves/frequencyDemo.png)
 
-Hopefully this makes things a little clearer. Now, we can choose a model for generating a spectrum. I chose to use the Phillips spectrum, which is one model based on oceanographic data. It a uses the wind velocity and gravitational to approximate the intensity of waves of different frequencies. By combining the phillips with some gaussian noise to model the probability of each frequency being present we can get a wide variety of possible oceans.
+Hopefully this makes things a little clearer. Now, we can choose a model for generating a spectrum. I chose to use the Jonswap spectrum, which is one model based on oceanographic data. It a uses the wind velocity and gravitational to approximate the intensity of waves of different frequencies. By combining the jonswap with some gaussian noise to model the probability of each frequency being present we can get a wide variety of possible oceans.
 
-Let's look at this spectrum and the heightmap that it generates. To interpret the spectrum, the pattern is that the frequency of a point is based on its distance from the center in the direction of the point and the amplitude is the brightnesss of the pixel. The phillips spectrum culls points that aren't in the same direction as the wind. It's strongest waves are also lower frequency, which is similar to our fractal brownian motion from before.
+Let's look at this spectrum and the heightmap that it generates. To interpret the spectrum, the pattern is that the frequency of a point is based on its distance from the center in the direction of the point and the amplitude is the brightnesss of the pixel. To visualize, we're going to look at a simpler spectrum which culls points that aren't in the same direction as the wind. It's strongest waves are also lower frequency, which is similar to our fractal brownian motion from before.
 
 ![comparison of spetrum and heightmap](/assets/img/better-waves/phillips.png)
 
@@ -118,7 +118,7 @@ There are two big bottlenecks that we still need to resolve. First and foremost,
 
 At further distances, the field of view of the camera covers a larger area, growing proportionally to the distance. This also means that detail becomes less noticeable. This insight can be used to determine that the projection of the camera scales the x and y coordinates of a point relative to the camera based on it's depth.
 
-**TODO: Some form of visual**
+![Depth Illustration](/assets/img/better-waves/depth.jpg)
 
 If we want a crude way to preserve the x and z coordinates so that they maintain their uniform spacing after the transformation, we can multiply them by their depth from the camera. Let's note that this is not perfect, because the x-z plane is not exactly perpendicular to the camera. However, when the plane is less perpendicular, it is viewed at more of a grazing angle, and the depth is less important. Let's take a look at our new vertex shader.
 
@@ -149,21 +149,78 @@ void main()
 
 Since some of the plane will have a negative depth, it doesn't matter what we do with these points (as long as they don't end up in camera's view). One solution is to multiply vertices by the absolute value of the depth, so the vertices with negative depth don't get flipped around in front of the camera.
 
-# **Another visual**
+![Ocean expanded to fill horizon](/assets/img/better-waves/expanded-mesh.png)
 
-Now, we have our ocean, but how do we fill it in with data? One option is to simply let the ocean repeat. Due to the periodic nature of the FFT, we can cycle over all 
+Now, we have our ocean, but how do we fill it in with data? One option is to simply let the ocean repeat. Due to the periodic nature of the FFT, we can tile our pattern. However, we have another option. We can run multiple simulations. The FFT is so efficient that it is low cost enough to have multiple simulations running. We can have one that has all of our small waves, another with medium waves, and a final with our largest waves. This way, we don't get repeating waves for a large distance, and we still maintain the high detail. The only thing to note, is that we need to restrict each wavelength to only one simulation, so that we don't double count. Let's implement this, and take a look at how this affects our ocean.
 
-# What is left to do to complete the ocean?
-- We should probably add a sky. Blend the skybox with a sun direction which matches the light.
-- Let's add some better lighting using a realistic lighting model (with reflections)
-- Let's add some sea foam by finding where the jacobian is negative, and accumulating that in a texture that exponentially decays.
+![Ocean without tiling](/assets/img/better-waves/no_tiling.png)
 
-## Setting the Scene
+Now, we have a simulation where we cannot see tiling. Since each simluation is a diffierent size, we can maintain the detailed waves without having to see the periodic nature of the smaller FFTs!
 
-## Blending In
+# Setting the Scene
 
-## Sea Foam
+There is still so much that we could do to improve the ocean, but I want to end this post by adding a few finishing touches. First off, I want to add a skybox to give our ocean an environment to live in. To do this, we will draw a cube mesh around the origin. Then, when we render it, we will strip the camera's translation componenent. This will give us the apperance that we are inside a box that doesn't moves. Let's write some code to test this out, and see how it looks. Here is our vertex shader.
+
+```glsl
+void main()
+{
+  // Reset the translation component of the camera.
+  mat4 cameraMatrix = u_ViewProjection;
+  cameraMatrix[3] = vec3(0.0, 0.0, 0.0, 1.0);
+
+  // Project using the new matrix.
+  gl_Position = cameraMatrix * vec4(a_Pos, 1.0);
+}
+```
+
+Now, we need to color this box. We can use the position of the box in space to do this. We can treat the coordinates as an arrow, and use them to sample a cubemap texture, or define our own function in the fragment shader. For now, I'm going to write a function that uses the height of the position to define a color gradient.
+
+```glsl
+vec4 SampleSkybox(vec3 direction)
+{
+  // Normalize the vector to get a unit length.
+  vec3 dir = normalize(direction);
+
+  // Compute the height above horizon (horizon = 0)
+  float height = dir.y;
+  
+  // Use the height to interpolate between our sky and horizon color.
+  return mix(horizonColor, skyColor, height);
+}
+```
+
+![Skybox and Waves](/assets/img/better-waves/skybox.png)
+
+This looks decent, but we could really use a sun in our sky. Let's choose some direction to be the direction of the sun, and find the angle between the sun and our direction in the sky using the dot product. If we do this, we can set a threshold to mix between the sky and the sun color. However, we want the sun to be white, so we can amplify the sun's color in the mixing, as if we are overexposing it.
+
+```glsl
+vec4 SampleSkybox(vec3 direction)
+{
+  // Normalize the vector to get a unit length.
+  vec3 dir = normalize(direction);
+
+  // Compute the height above horizon (horizon = 0)
+  float height = dir.y;
+  
+  // Use the height to interpolate between our sky and horizon color.
+  vec4 skyGradient = mix(horizonColor, skyColor, height);
+
+  // Use a smoothstep to fade between the two colors.
+  float sunCosine = dot(dir, sunDirection);
+  float sunInfluence = smoothstep(sunThreshold - sunFade, sunThreshold, sunCosine);
+
+  // Multiply the sun color by a factor of two to overexpose it.
+  return (1.0 - sunInfluence) * skyGradient + (2.0 * sunInfluence) * sunColor;
+}
+```
+
+For now, I'm going to leave the sky here. But I'm going to add a few finishing touches tie everything together. There are a lot of fancy lighting models that I'd love to explore in the future, but for now, we can approximate water shading by adding two factors to our lighting model. First, we can add specular reflections to the surface. While Lambert's cosine law captures the magnitude of indirect light that reaches the camera, specular reflections capture light that bounces directly from the source to the light. This can get complicated quickly, but we can reflect the direction towards the camera around the normal of the surface and then compare that to the sun direction in a similar manner to before. Additionally, we estimate subsurface scattering by adding a term proportional to the height of the water. This is a pretty over-simplified model, but if we combine it with reflections by multiplying all of the terms by the color of the reflected skybox, we will have a pretty convincing ocean. Finally, we add a post processing based fog shader to blend the horizon with the skyline. I'm super happy with how the ocean ended up looking.
+
+![final showcase](/assets/img/better-waves/final.png)
+
+I may revisit this project in the future, as there is still so much that could be done, but I have a few other ideas that I'm hoping to explore. While I've really enjyoed this project, the scope was very large for a single blog post, so I unfortunately had to skip over a lot of the details and optimizations that made me enjoy this project the most. I think that I will keep this in mind as I move forward on these types of projects. Still, I learned so much about graphics programming, and I solidified that knowledge by putting theory into practice. You can check out the source code for this project [here](https://github.com/james51332/OceanSimulation)!
 
 ## References
 
 * [GPU-Efficient FFT](https://www.cs.unm.edu/~angel/fftgpu.pdf)
+* [Empirical Directional Wave Spectra for Cpmputer Graphics](https://dl.acm.org/doi/10.1145/2791261.2791267)
