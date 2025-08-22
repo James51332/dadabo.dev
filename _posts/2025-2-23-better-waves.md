@@ -223,4 +223,4 @@ I may revisit this project in the future, as there is still so much that could b
 ## References
 
 * [GPU-Efficient FFT](https://www.cs.unm.edu/~angel/fftgpu.pdf)
-* [Empirical Directional Wave Spectra for Cpmputer Graphics](https://dl.acm.org/doi/10.1145/2791261.2791267)
+* [Empirical Directional Wave Spectra for Computer Graphics](https://dl.acm.org/doi/10.1145/2791261.2791267)
